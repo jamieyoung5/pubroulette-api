@@ -1,4 +1,4 @@
-package tags_filter
+package filter
 
 func FilterTags(tags map[string]string, whitelist []Tag) (filteredTags []string) {
 

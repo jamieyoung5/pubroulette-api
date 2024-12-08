@@ -1,8 +1,9 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
-	"github.com/jamieyoung5/pooblet/internal/pubapi"
+	"github.com/jamieyoung5/pooblet/internal/roulette"
+	"github.com/jamieyoung5/pooblet/internal/verification"
 	"net/http"
 	"strconv"
 )
@@ -25,7 +26,18 @@ func GetPubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pub, err := pubapi.GetPub(lat, lon, rad)
+	latitude, longitude, err := verification.VerifyLocation(lon, lat)
+	if err != nil {
+		http.Error(w, "Invalid location", http.StatusBadRequest)
+		return
+	}
+	radius, err := verification.VerifyRadius(rad)
+	if err != nil {
+		http.Error(w, "Invalid radius", http.StatusBadRequest)
+		return
+	}
+
+	pub, err := roulette.NewGame().Play(latitude, longitude, radius)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

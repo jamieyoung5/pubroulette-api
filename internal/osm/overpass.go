@@ -1,11 +1,31 @@
-// An interface to the overpass API and the queries served to it
+// Interacts with the overpass API
 
-package overpass
+package osm
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 )
+
+const overpassInterpreter = "http://overpass-api.de/api/interpreter"
+
+func Query(query string) (response []byte, err error) {
+	resp, err := http.Post(overpassInterpreter, "application/x-www-form-urlencoded", bytes.NewBufferString("data="+query))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
 
 func GetAmenitiesInRadius(lat, long, radius string, amenity string) (amenitiesInRadius Places, err error) {
 	locationRadiusParameter := fmt.Sprintf("(around:%s,%s,%s);", radius, lat, long)

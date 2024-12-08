@@ -1,5 +1,5 @@
 // Package nominatim is a tool that provides a sort of 'search engine' for OpenStreetMap data
-package nominatim
+package osm
 
 import (
 	"encoding/json"
@@ -7,6 +7,15 @@ import (
 	"io"
 	"net/http"
 )
+
+type Address struct {
+	Road        string `json:"road"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	Postcode    string `json:"postcode"`
+	Country     string `json:"country"`
+	CountryCode string `json:"country_code"`
+}
 
 const nominatimReverseGeocode = "https://nominatim.openstreetmap.org/reverse?format=json&lat=%f&lon=%f"
 

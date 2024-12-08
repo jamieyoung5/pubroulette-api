@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/jamieyoung5/pooblet/internal/handlers"
-	"github.com/jamieyoung5/pooblet/internal/osm/overpass"
+	"github.com/jamieyoung5/pooblet/internal/handler"
+	"github.com/jamieyoung5/pooblet/internal/osm"
 	"github.com/jamieyoung5/pooblet/internal/roulette"
 	"github.com/jamieyoung5/pooblet/internal/verification"
 	"log"
@@ -25,7 +25,7 @@ func getPubs2(lat, lon float64, rad int) {
 		panic(err)
 	}
 
-	response, err := overpass.GetAmenitiesInRadius(latitude, longitude, radius, "bar")
+	response, err := osm.GetAmenitiesInRadius(latitude, longitude, radius, "bar")
 	if err != nil {
 		panic(err)
 	}
@@ -87,8 +87,8 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 	r := mux.NewRouter()
-	r.HandleFunc("/getPub", handlers.GetPubHandler).Methods(http.MethodGet)
-	r.Use(handlers.CORSMiddleware)
+	r.HandleFunc("/getPub", handler.GetPubHandler).Methods(http.MethodGet)
+	r.Use(handler.CORSMiddleware)
 
 	log.Println("Server is running on port " + port + "...")
 	log.Fatal(http.ListenAndServe(":"+port, r))

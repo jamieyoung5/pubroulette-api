@@ -1,4 +1,4 @@
-package overpass
+package osm
 
 type Places map[int]Element
 

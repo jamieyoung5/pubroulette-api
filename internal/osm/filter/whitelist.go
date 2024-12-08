@@ -1,4 +1,4 @@
-package tags_filter
+package filter
 
 var ValidTags = []Tag{
 	{

@@ -1,4 +1,4 @@
-package tags_filter
+package filter
 
 func filterBoolean(value string) bool {
 	if value != "no" {
