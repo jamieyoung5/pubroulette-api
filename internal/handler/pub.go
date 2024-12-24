@@ -37,7 +37,7 @@ func GetPubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pub, err := roulette.NewGame().Play(latitude, longitude, radius)
+	pub, err := roulette.Classic(latitude, longitude, radius)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
