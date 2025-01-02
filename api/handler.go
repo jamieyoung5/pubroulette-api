@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func GetPubHandler(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	lat, err := strconv.ParseFloat(query.Get("lat"), 64)
 	if err != nil {
