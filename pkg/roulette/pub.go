@@ -16,8 +16,12 @@ type Pub struct {
 var amenities = []string{"pub", "bar"}
 
 func parsePlaceToPub(place osm.Element) (*Pub, error) {
-	names := filter.FilterPlaceNameFromTags(place.Tags)
-	tags := filter.FilterTags(place.Tags, filter.ValidTags)
+	names, err := filter.PlaceNameFromTags(place.Tags)
+	if err != nil {
+		return nil, err
+	}
+
+	tags := filter.Tags(place.Tags, filter.ValidTags)
 	address, err := osm.ReverseGeocode(place.Lat, place.Lon)
 	if err != nil {
 		return nil, err

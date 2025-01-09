@@ -7,6 +7,26 @@ import (
 )
 
 func Play(lat, long string, radius string) (*Pub, error) {
+	places, err := getPlacesInRadius(lat, long, radius)
+	if err != nil {
+		return nil, err
+	}
+	if len(places) <= 0 {
+		return nil, errors.New("no places found")
+	}
+
+	for i := 0; i < 3; i++ {
+		randomPlace := places[getRandomPlace(places)]
+		pub, parsingErr := parsePlaceToPub(randomPlace)
+		if parsingErr == nil {
+			return pub, nil
+		}
+	}
+
+	return nil, errors.New("failed to parse a valid place to Pub after 3 attempts")
+}
+
+func getPlacesInRadius(lat, long string, radius string) (osm.Places, error) {
 	var results []osm.Places
 	for _, amenity := range amenities {
 		result, err := osm.GetAmenitiesInRadius(lat, long, radius, amenity)
@@ -15,13 +35,8 @@ func Play(lat, long string, radius string) (*Pub, error) {
 		}
 		results = append(results, result)
 	}
-	places := combinePlaces(results)
-	if len(places) <= 0 {
-		return nil, errors.New("no places found")
-	}
-	randomPlace := places[getRandomPlace(places)]
 
-	return parsePlaceToPub(randomPlace)
+	return combinePlaces(results), nil
 }
 
 func getRandomPlace(places osm.Places) int {
