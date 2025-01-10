@@ -16,11 +16,13 @@ func Play(lat, long string, radius string) (*Pub, error) {
 	}
 
 	for i := 0; i < 3; i++ {
-		randomPlace := places[getRandomPlace(places)]
-		pub, parsingErr := parsePlaceToPub(randomPlace)
+		randomPlace := getRandomPlace(places)
+		pub, parsingErr := parsePlaceToPub(places[randomPlace])
 		if parsingErr == nil {
 			return pub, nil
 		}
+
+		delete(places, randomPlace)
 	}
 
 	return nil, errors.New("failed to parse a valid place to Pub after 3 attempts")
