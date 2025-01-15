@@ -1,28 +1,34 @@
-package filter
+package osm
 
 import "errors"
 
-func Tags(tags map[string]string, whitelist []Tag) (filteredTags []string) {
+type Places map[int]Element
 
-	for tagName, tagValue := range tags {
-		for _, validTag := range whitelist {
-			if tagName == validTag.Name {
-				if validTag.Filter(tagValue) {
-					filteredTags = append(filteredTags, validTag.Alias)
-				}
-			}
-		}
-	}
-
-	return filteredTags
+type Response struct {
+	Elements []Element `json:"elements"`
 }
 
-func PlaceNameFromTags(tags map[string]string) (Names, error) {
+type Element struct {
+	Type  string            `json:"type"`
+	ID    int               `json:"id"`
+	Lat   float64           `json:"lat"`
+	Lon   float64           `json:"lon"`
+	Nodes []int             `json:"nodes"`
+	Tags  map[string]string `json:"tags"`
+}
+
+type Names struct {
+	AltName string
+	Name    string
+	OldName string
+}
+
+func (e *Element) FindNames() (Names, error) {
 	names := Names{
 		Name: "unknown",
 	}
 
-	for tagName, tagValue := range tags {
+	for tagName, tagValue := range e.Tags {
 		switch tagName {
 		case "alt_name":
 			names.AltName = tagValue

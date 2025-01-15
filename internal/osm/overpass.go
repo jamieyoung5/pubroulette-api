@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+var PubAmenities = []string{"pub", "bar"}
+
 const overpassInterpreter = "http://overpass-api.de/api/interpreter"
 
 func Query(query string) (response []byte, err error) {
@@ -27,7 +29,7 @@ func Query(query string) (response []byte, err error) {
 	return body, nil
 }
 
-func GetAmenitiesInRadius(lat, long, radius string, amenity string) (amenitiesInRadius Places, err error) {
+func GetAmenitiesInRadius(lat, long, radius string, amenity string) (Places, error) {
 	locationRadiusParameter := fmt.Sprintf("(around:%s,%s,%s);", radius, lat, long)
 	query := `[out:json];
     (
@@ -49,14 +51,14 @@ func GetAmenitiesInRadius(lat, long, radius string, amenity string) (amenitiesIn
 		return nil, err
 	}
 
-	return mapResponseElementToId(parsedResponse), nil
+	return mapPlaces(parsedResponse)
 }
 
-func mapResponseElementToId(response *Response) (place Places) {
-	place = make(Places)
+func mapPlaces(response *Response) (Places, error) {
+	places := make(Places)
 	for _, element := range response.Elements {
-		place[element.ID] = element
+		places[element.ID] = element
 	}
 
-	return place
+	return places, nil
 }

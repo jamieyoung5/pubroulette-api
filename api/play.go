@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/jamieyoung5/pooblet/pkg/roulette"
-	"github.com/jamieyoung5/pooblet/pkg/verification"
+	"github.com/jamieyoung5/pooblet/internal/roulette"
+	"github.com/jamieyoung5/pooblet/internal/whatpub"
 	"net/http"
 	"strconv"
 )
@@ -37,18 +37,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	latitude, longitude, err := verification.VerifyLocation(lon, lat)
+	latitude, longitude, err := roulette.ValidateLocation(lon, lat)
 	if err != nil {
 		http.Error(w, "Invalid location", http.StatusBadRequest)
 		return
 	}
-	radius, err := verification.VerifyRadius(rad)
+	radius, err := roulette.ValidateRadius(rad)
 	if err != nil {
 		http.Error(w, "Invalid radius", http.StatusBadRequest)
 		return
 	}
 
-	pub, err := roulette.Play(latitude, longitude, radius)
+	scrapers := []roulette.ScraperFunc{
+		whatpub.Scrape,
+	}
+
+	pub, err := roulette.Play(latitude, longitude, radius, scrapers)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
