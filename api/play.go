@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/jamieyoung5/pooblet/internal/roulette"
-	"github.com/jamieyoung5/pooblet/internal/whatpub"
+	"github.com/jamieyoung5/pooblet/pkg/roulette"
+	"github.com/jamieyoung5/pooblet/pkg/whatpub"
 	"net/http"
 	"strconv"
 )
