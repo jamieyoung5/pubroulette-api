@@ -22,7 +22,7 @@ features tagged '(Front-end)' are front-end only implementation
 i dont have prod, staging and dev servers but this is required for a first 'public' release 
 (e.g assigning the pubroulette.com domain)
 
-- (Back-end) Tests
 - (Back-end) proper branching strategy
 - (Back-end) github actions pipeline
 - (Back-end) don't allow all origins
+- (Front/Back-end) move to pubroulette.com/pubroulette.xyz domains

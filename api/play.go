@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/jamieyoung5/pooblet/pkg/osm"
 	"github.com/jamieyoung5/pooblet/pkg/roulette"
 	"github.com/jamieyoung5/pooblet/pkg/whatpub"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 )
@@ -48,11 +50,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scrapers := []roulette.ScraperFunc{
-		whatpub.Scrape,
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return
 	}
 
-	pub, err := roulette.Play(latitude, longitude, radius, scrapers)
+	scrapers := []roulette.Scraper{
+		{Source: "whatpub.com", Scrape: whatpub.Scrape},
+	}
+
+	overpassApi := osm.NewOverpassApi(logger)
+
+	game := roulette.NewGame(logger, scrapers, overpassApi)
+	
+	pub, err := game.Play(latitude, longitude, radius)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
