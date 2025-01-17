@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jamieyoung5/pooblet/internal/pub"
+	"github.com/jamieyoung5/pooblet/pkg/pub"
 	"net/http"
+	"net/url"
 )
 
 type PubInfo struct {
@@ -29,10 +30,9 @@ type searchApiResponse struct {
 	} `json:"results"`
 }
 
-const (
-	baseUrl   = "https://whatpub.com"
-	searchApi = "/search/autocomplete?q=%s&features=&limit=10&AdditionalServices=false&home=1"
-)
+var BaseUrl = "https://whatpub.com"
+
+const searchApi = "/search/autocomplete?q=%s&features=&limit=10&AdditionalServices=false&home=1"
 
 func Scrape(pubName string) (pub.Pub, error) {
 	var result pub.Pub
@@ -69,7 +69,9 @@ func Scrape(pubName string) (pub.Pub, error) {
 }
 
 func findPubUrl(name string) (string, error) {
-	searchRequestUrl := baseUrl + fmt.Sprintf(searchApi, name)
+	encodedName := url.QueryEscape(name)
+	searchRequestUrl := BaseUrl + fmt.Sprintf(searchApi, encodedName)
+
 	resp, err := http.Get(searchRequestUrl)
 	if err != nil {
 		return "", nil
@@ -91,5 +93,5 @@ func findPubUrl(name string) (string, error) {
 
 	href := searchResp.Results[0].Href
 
-	return baseUrl + href, nil
+	return BaseUrl + href, nil
 }

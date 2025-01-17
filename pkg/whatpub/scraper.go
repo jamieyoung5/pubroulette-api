@@ -3,7 +3,7 @@ package whatpub
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jamieyoung5/pooblet/internal/pub"
+	"github.com/jamieyoung5/pooblet/pkg/pub"
 	"strings"
 )
 

@@ -29,9 +29,10 @@ func FilterTags(tags map[string]string) {
 
 		if !whitelist[name].filter(alias) {
 			delete(tags, name)
+			continue
 		}
 
-		tags[name] = alias
+		tags[name] = whitelist[name].alias
 	}
 }
 

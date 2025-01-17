@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-const maxRadius = 2000
+const maxRadius = 2000 // in meters
 
 func ValidateLocation(long float64, lat float64) (latitude, longitude string, err error) {
 	if long < -180 || long > 180 {
