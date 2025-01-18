@@ -25,7 +25,7 @@ type Names struct {
 
 func (e *Element) FindNames() (Names, error) {
 	names := Names{
-		Name: "unknown",
+		Name: "unknown", // Setting this as the default value is kinda an anti-pattern. What if the pub is actually called "unknown"?
 	}
 
 	for tagName, tagValue := range e.Tags {

@@ -13,7 +13,8 @@ import (
 
 var PubAmenities = []string{"pub", "bar"}
 
-const overpassInterpreter = "http://overpass-api.de/api/interpreter"
+// This API serves over http? big yikes
+const overpassInterpreterUrl = "http://overpass-api.de/api/interpreter"
 
 type OverpassApi struct {
 	logger *zap.Logger
@@ -25,8 +26,10 @@ func NewOverpassApi(logger *zap.Logger) *OverpassApi {
 	}
 }
 
+// 'Amenities'? Is it not only getting pubs?
 func (oa *OverpassApi) GetAmenitiesInRadius(lat, long, radius string, amenity string) (Places, error) {
 	locationRadiusParameter := fmt.Sprintf("(around:%s,%s,%s);", radius, lat, long)
+	// This query is a mess
 	query := `[out:json];
     (
       node["amenity"="` + amenity + `"]` + locationRadiusParameter + `
@@ -53,7 +56,7 @@ func (oa *OverpassApi) GetAmenitiesInRadius(lat, long, radius string, amenity st
 }
 
 func executeQuery(query string) (response []byte, err error) {
-	resp, err := http.Post(overpassInterpreter, "application/x-www-form-urlencoded", bytes.NewBufferString("data="+query))
+	resp, err := http.Post(overpassInterpreterUrl, "application/x-www-form-urlencoded", bytes.NewBufferString("data="+query))
 	if err != nil {
 		return nil, err
 	}

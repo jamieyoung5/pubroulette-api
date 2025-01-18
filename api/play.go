@@ -38,6 +38,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
 	w.Header().Set("Content-Type", "application/json")
 
+	// Pretty sure you are overwriting the Access-Control-Allow-Origin header here
+	// setCORSHeaders(w, r) sets it to just ur pub roulette domain, then you overwrite it to *
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -69,6 +71,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	pub, err := game.Play(latitude, longitude, radius)
 	if err != nil {
 		logger.Error("Failed to play roulette", zap.Error(err))
+		// You shouldnt expose the error message to the client
 		errorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}

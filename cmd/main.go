@@ -14,6 +14,7 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 	r := mux.NewRouter()
+	// REST best practices dictate that the endpoint should be a noun i.e /pub
 	r.HandleFunc("/getPub", api.Handler).Methods(http.MethodGet)
 	r.Use(api.CORSMiddleware)
 

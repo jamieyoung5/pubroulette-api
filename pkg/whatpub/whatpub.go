@@ -30,6 +30,7 @@ type searchApiResponse struct {
 	} `json:"results"`
 }
 
+// Why cant this be a const?
 var BaseUrl = "https://whatpub.com"
 
 const searchApi = "/search/autocomplete?q=%s&features=&limit=10&AdditionalServices=false&home=1"
