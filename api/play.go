@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/jamieyoung5/pooblet/pkg/osm"
 	"github.com/jamieyoung5/pooblet/pkg/roulette"
 	"github.com/jamieyoung5/pooblet/pkg/whatpub"
@@ -10,32 +11,39 @@ import (
 	"strconv"
 )
 
+var (
+	allowedOrigins = map[string]bool{
+		"https://www.pubroulette-web.vercel.app": true,
+		"https://www.pubroulette.com":            true,
+		"https://www.pubroulette.xyz":            true,
+	}
+	logger *zap.Logger
+)
+
+func init() {
+	var err error
+	logger, err = zap.NewProduction()
+	if err != nil {
+		panic("Failed to initialise logger")
+	}
+}
+
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
+		setCORSHeaders(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
+	setCORSHeaders(w, r)
+	w.Header().Set("Content-Type", "application/json")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	query := r.URL.Query()
-	lat, err := strconv.ParseFloat(query.Get("lat"), 64)
+	lat, lon, rad, err := parseQueryParams(r)
 	if err != nil {
-		http.Error(w, "Invalid latitude", http.StatusBadRequest)
-		return
-	}
-	lon, err := strconv.ParseFloat(query.Get("lon"), 64)
-	if err != nil {
-		http.Error(w, "Invalid longitude", http.StatusBadRequest)
-		return
-	}
-	rad, err := strconv.Atoi(query.Get("radius"))
-	if err != nil {
-		http.Error(w, "Invalid radius", http.StatusBadRequest)
+		errorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -50,11 +58,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return
-	}
-
 	scrapers := []roulette.Scraper{
 		{Source: "whatpub.com", Scrape: whatpub.Scrape},
 	}
@@ -62,20 +65,50 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	overpassApi := osm.NewOverpassApi(logger)
 
 	game := roulette.NewGame(logger, scrapers, overpassApi)
-	
+
 	pub, err := game.Play(latitude, longitude, radius)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("Failed to play roulette", zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(pub)
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(pub); err != nil {
+		logger.Error("Failed to encode response", zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, "Internal Server Error")
+	}
 }
 
-func CORSMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		next.ServeHTTP(w, r)
-	})
+func parseQueryParams(r *http.Request) (float64, float64, int, error) {
+	query := r.URL.Query()
+
+	lat, err := strconv.ParseFloat(query.Get("lat"), 64)
+	if err != nil {
+		return 0, 0, 0, errors.New("invalid latitude")
+	}
+
+	lon, err := strconv.ParseFloat(query.Get("lon"), 64)
+	if err != nil {
+		return 0, 0, 0, errors.New("invalid longitude")
+	}
+
+	radius, err := strconv.Atoi(query.Get("radius"))
+	if err != nil {
+		return 0, 0, 0, errors.New("invalid radius")
+	}
+
+	return lat, lon, radius, nil
+}
+
+func errorResponse(w http.ResponseWriter, status int, message string) {
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
+func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
+	origin := r.Header.Get("Origin")
+	if allowedOrigins[origin] {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+	}
 }
