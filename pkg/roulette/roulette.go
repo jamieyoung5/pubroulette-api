@@ -71,21 +71,21 @@ func (g *Game) Play(lat, lon string, radius string) (*pub.Pub, error) {
 	}
 
 	// find a random pub from gathered places,
-	// with a max of 3 attempts to allow for potential data anomalies
+	// with a max of 10 attempts to allow for potential data anomalies
 	for i := range parsingAttempts {
 		randomPlaceId := randomPlace(places)
 		randPub, err := g.processRandomPlace(places[randomPlaceId])
 		if err == nil {
-			g.logger.Error(
-				"Failed to process random place",
-				zap.String("id", g.id.String()),
-				zap.Int("place id", randomPlaceId),
-				zap.String("attempt", fmt.Sprintf("%d/%d", i, parsingAttempts)),
-				zap.Error(err),
-			)
 			return randPub, nil
 		}
 
+		g.logger.Error(
+			"Failed to process random place",
+			zap.String("id", g.id.String()),
+			zap.Int("place id", randomPlaceId),
+			zap.String("attempt", fmt.Sprintf("%d/%d", i, parsingAttempts)),
+			zap.Error(err),
+		)
 		delete(places, i)
 	}
 
@@ -104,7 +104,7 @@ func (g *Game) processRandomPlace(place osm.Element) (*pub.Pub, error) {
 	for _, scraper := range g.scrapers {
 		result, scrapingErr := scraper.Scrape(randPub.Name.Name)
 		if scrapingErr != nil {
-			g.logger.Debug(
+			g.logger.Error(
 				"Failed to scrape source for additional pub data",
 				zap.String("Pub name", randPub.Name.Name),
 				zap.String("Source", scraper.Source),

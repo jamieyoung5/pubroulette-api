@@ -13,7 +13,7 @@ import (
 
 var PubAmenities = []string{"pub", "bar"}
 
-const overpassInterpreter = "http://overpass-api.de/api/interpreter"
+const overpassInterpreter = "https://overpass-api.de/api/interpreter"
 
 type OverpassApi struct {
 	logger *zap.Logger
