@@ -15,13 +15,11 @@ var whitelist = map[string]tagFilter{
 	"real ale":           {alias: "Real Ale", filter: presence},
 	"brewery":            {alias: "Brewery", filter: boolean},
 	"microbrewery":       {alias: "Micro Brewery", filter: boolean},
-	"lgbtq":              {alias: "LGBTQ+", filter: primary},
+	"lgbtq":              {alias: "LGBTQ+", filter: primary}, // 🏳️‍🌈
 }
 
 func FilterTags(tags map[string]string) {
-
 	for name, alias := range tags {
-
 		if _, ok := whitelist[name]; !ok {
 			delete(tags, name)
 			continue
@@ -40,6 +38,7 @@ func boolean(value string) bool {
 	return value != "no"
 }
 
+// Purpose of this function? unused value param
 func presence(value string) bool {
 	return true
 }

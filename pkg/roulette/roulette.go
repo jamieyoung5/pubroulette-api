@@ -72,10 +72,10 @@ func (g *Game) Play(lat, lon string, radius string) (*pub.Pub, error) {
 
 	// find a random pub from gathered places,
 	// with a max of 3 attempts to allow for potential data anomalies
-	for i := range parsingAttempts {
+	for i := range parsingAttempts { // parsingAttempts is 10 not 3 as the above comment indicates
 		randomPlaceId := randomPlace(places)
 		randPub, err := g.processRandomPlace(places[randomPlaceId])
-		if err == nil {
+		if err != nil {
 			g.logger.Error(
 				"Failed to process random place",
 				zap.String("id", g.id.String()),
@@ -83,17 +83,16 @@ func (g *Game) Play(lat, lon string, radius string) (*pub.Pub, error) {
 				zap.String("attempt", fmt.Sprintf("%d/%d", i, parsingAttempts)),
 				zap.Error(err),
 			)
+			delete(places, i)
+		} else {
 			return randPub, nil
 		}
-
-		delete(places, i)
 	}
 
 	return nil, ErrParsingFailure
 }
 
 func (g *Game) processRandomPlace(place osm.Element) (*pub.Pub, error) {
-
 	randPub, err := pub.OsmElementToPub(place)
 	if err != nil {
 		g.logger.Error("Failed to convert open street maps place to pub", zap.Int("place id", place.ID), zap.Error(err))
@@ -104,27 +103,27 @@ func (g *Game) processRandomPlace(place osm.Element) (*pub.Pub, error) {
 	for _, scraper := range g.scrapers {
 		result, scrapingErr := scraper.Scrape(randPub.Name.Name)
 		if scrapingErr != nil {
-			g.logger.Debug(
+			g.logger.Error(
 				"Failed to scrape source for additional pub data",
 				zap.String("Pub name", randPub.Name.Name),
 				zap.String("Source", scraper.Source),
 				zap.Error(scrapingErr),
 			)
-			continue
-		}
-		g.logger.Debug(
-			"Successfully scraped source for additional pub data",
-			zap.String("Pub name", randPub.Name.Name),
-			zap.String("Source", scraper.Source),
-		)
+		} else { // Avoid `continue` statements and any other things that break the flow of control
+			g.logger.Debug(
+				"Successfully scraped source for additional pub data",
+				zap.String("Pub name", randPub.Name.Name),
+				zap.String("Source", scraper.Source),
+			)
 
-		pub.Merge(randPub, result)
+			pub.Merge(randPub, result)
+		}
 	}
 
 	return randPub, nil
 }
 
 func randomPlace(places osm.Places) int {
-	keys := slices.Collect(maps.Keys(places))
+	keys := slices.Collect(maps.Keys(places)) // If keys is 0 length, this will panic
 	return keys[rand.Intn(len(keys))]
 }
