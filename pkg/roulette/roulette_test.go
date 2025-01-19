@@ -2,6 +2,8 @@ package roulette_test
 
 import (
 	"errors"
+	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
 	"testing"
 
 	"github.com/jamieyoung5/pooblet/pkg/osm"
@@ -25,6 +27,17 @@ func MockScraperFunc(name string) (pub.Pub, error) {
 	return pub.Pub{}, errors.New("mock scraper error")
 }
 
+func createMockRedis(t *testing.T) (*redis.Client, *miniredis.Miniredis) {
+	srv, err := miniredis.Run()
+	assert.NoError(t, err)
+
+	client := redis.NewClient(&redis.Options{
+		Addr: srv.Addr(),
+	})
+
+	return client, srv
+}
+
 func TestNewGame(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	scrapers := []roulette.Scraper{
@@ -32,7 +45,10 @@ func TestNewGame(t *testing.T) {
 	}
 	overpassApi := &MockOverpassApi{}
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	client, srv := createMockRedis(t)
+	defer srv.Close()
+
+	game := roulette.NewGame(logger, scrapers, overpassApi, client)
 
 	assert.NotNil(t, game)
 }
@@ -45,7 +61,10 @@ func TestGame_Play_NoPlacesFound(t *testing.T) {
 	overpassApi := &MockOverpassApi{}
 	overpassApi.On("GetAmenitiesInRadius", "51.5074", "-0.1278", "500", mock.Anything).Return(osm.Places{}, nil)
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	client, srv := createMockRedis(t)
+	defer srv.Close()
+
+	game := roulette.NewGame(logger, scrapers, overpassApi, client)
 
 	_, err := game.Play("51.5074", "-0.1278", "500")
 	assert.Error(t, err)
@@ -66,7 +85,10 @@ func TestGame_Play_Success(t *testing.T) {
 	}
 	overpassApi.On("GetAmenitiesInRadius", "51.5074", "-0.1278", "500", mock.Anything).Return(places, nil)
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	client, srv := createMockRedis(t)
+	defer srv.Close()
+
+	game := roulette.NewGame(logger, scrapers, overpassApi, client)
 
 	result, err := game.Play("51.5074", "-0.1278", "500")
 	assert.NoError(t, err)
@@ -86,7 +108,10 @@ func TestGame_Play_ScraperErrorHandling(t *testing.T) {
 	}
 	overpassApi.On("GetAmenitiesInRadius", "51.5074", "-0.1278", "500", mock.Anything).Return(places, nil)
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	client, srv := createMockRedis(t)
+	defer srv.Close()
+
+	game := roulette.NewGame(logger, scrapers, overpassApi, client)
 
 	result, err := game.Play("51.5074", "-0.1278", "500")
 	assert.NoError(t, err)
@@ -107,7 +132,10 @@ func TestGame_Play_MultipleAmenities(t *testing.T) {
 	overpassApi.On("GetAmenitiesInRadius", "51.5074", "-0.1278", "500", "pub").Return(places1, nil)
 	overpassApi.On("GetAmenitiesInRadius", "51.5074", "-0.1278", "500", "bar").Return(places2, nil)
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	client, srv := createMockRedis(t)
+	defer srv.Close()
+
+	game := roulette.NewGame(logger, scrapers, overpassApi, client)
 
 	result, err := game.Play("51.5074", "-0.1278", "500")
 	assert.NoError(t, err)

@@ -14,8 +14,8 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 	r := mux.NewRouter()
-	r.HandleFunc("/getPub", api.Handler).Methods(http.MethodGet)
-	r.Use(api.CORSMiddleware)
+	r.HandleFunc("/pub", api.Handler).Methods(http.MethodGet)
+	r.Use(CORSMiddleware)
 
 	log.Println("Server is running on port " + port + "...")
 	log.Fatal(http.ListenAndServe(":"+port, r))

@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/jamieyoung5/pooblet/pkg/osm"
+	"github.com/jamieyoung5/pooblet/pkg/redis-client"
 	"github.com/jamieyoung5/pooblet/pkg/roulette"
 	"github.com/jamieyoung5/pooblet/pkg/whatpub"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -17,7 +19,8 @@ var (
 		"https://www.pubroulette.com":            true,
 		"https://www.pubroulette.xyz":            true,
 	}
-	logger *zap.Logger
+	logger  *zap.Logger
+	redisDb *redis.Client
 )
 
 func init() {
@@ -26,6 +29,8 @@ func init() {
 	if err != nil {
 		panic("Failed to initialise logger")
 	}
+
+	redisDb = redis_client.NewRedisDatabase()
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -36,9 +41,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setCORSHeaders(w, r)
-	w.Header().Set("Content-Type", "application/json")
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	lat, lon, rad, err := parseQueryParams(r)
@@ -64,12 +66,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	overpassApi := osm.NewOverpassApi(logger)
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	game := roulette.NewGame(logger, scrapers, overpassApi, redisDb)
 
 	pub, err := game.Play(latitude, longitude, radius)
 	if err != nil {
 		logger.Error("Failed to play roulette", zap.Error(err))
-		errorResponse(w, http.StatusInternalServerError, err.Error())
+		errorResponse(w, http.StatusInternalServerError, "error occurred while playing roulette")
 		return
 	}
 
