@@ -12,7 +12,7 @@ const (
 	passwordENV = "REDIS_PASSWORD"
 )
 
-func NewRedisCache() *redis.Client {
+func NewRedisDatabase() *redis.Client {
 	url := buildConnectionUrl()
 
 	opt, _ := redis.ParseURL(url)

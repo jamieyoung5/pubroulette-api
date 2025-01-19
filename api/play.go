@@ -30,7 +30,7 @@ func init() {
 		panic("Failed to initialise logger")
 	}
 
-	redisDb = redis_client.NewRedisCache()
+	redisDb = redis_client.NewRedisDatabase()
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	overpassApi := osm.NewOverpassApi(logger)
 
-	game := roulette.NewGame(logger, scrapers, overpassApi)
+	game := roulette.NewGame(logger, scrapers, overpassApi, redisDb)
 
 	pub, err := game.Play(latitude, longitude, radius)
 	if err != nil {

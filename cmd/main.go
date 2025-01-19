@@ -15,7 +15,7 @@ func main() {
 	}
 	r := mux.NewRouter()
 	r.HandleFunc("/pub", api.Handler).Methods(http.MethodGet)
-	r.Use(api.CORSMiddleware)
+	r.Use(CORSMiddleware)
 
 	log.Println("Server is running on port " + port + "...")
 	log.Fatal(http.ListenAndServe(":"+port, r))
