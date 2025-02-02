@@ -17,3 +17,10 @@ features tagged '(Front-end)' are front-end only implementation
 - (Front-end?) Display walking time
 - (Front-end?) Select transportation mode (walking/driving, etc)
 - Drinking games
+
+## Error codes
+1 - general roulette error
+2 - no pubs found
+3 - server error
+4 - invalid input
+

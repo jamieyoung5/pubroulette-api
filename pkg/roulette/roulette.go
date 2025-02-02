@@ -63,7 +63,7 @@ func (g *Game) Play(lat, lon string, radius string) (*pub.Pub, error) {
 				zap.String("amenity", amenity),
 				zap.Error(err),
 			)
-			return nil, err
+			return nil, ErrSearchFailure
 		}
 		maps.Copy(places, result)
 	}
