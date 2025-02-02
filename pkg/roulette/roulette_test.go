@@ -142,3 +142,27 @@ func TestGame_Play_MultipleAmenities(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Contains(t, []string{"Amenity 1 Pub", "Amenity 2 Pub"}, result.Name.Name) // Ensure one of the pubs is returned
 }
+
+func TestGame_BlacklistOnOsmElementToPubFailure(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+	scrapers := []roulette.Scraper{}
+
+	overpassApi := &MockOverpassApi{}
+	places := osm.Places{
+		1: {ID: 1, Lat: 51.5074, Lon: -0.1278, Tags: map[string]string{}}, // no name tags provided for pub
+	}
+
+	overpassApi.On("GetAmenitiesInRadius", "51.5074", "-0.1278", "500", mock.Anything).Return(places, nil)
+
+	client, srv := createMockRedis(t)
+	defer srv.Close()
+
+	game := roulette.NewGame(logger, scrapers, overpassApi, client)
+
+	_, err := game.Play("51.5074", "-0.1278", "500")
+	assert.Error(t, err)
+
+	blacklisted, err := roulette.IsBlacklisted(client, 1)
+	assert.NoError(t, err)
+	assert.True(t, blacklisted, "Pub should be blacklisted after OsmElementToPub failure")
+}

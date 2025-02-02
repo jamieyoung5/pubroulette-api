@@ -90,7 +90,13 @@ func (g *Game) Play(lat, lon string, radius string) (*pub.Pub, error) {
 // findPub finds a random pub from gathered places,
 // with a max of 10 attempts to allow for potential data anomalies
 func (g *Game) findPub(places osm.Places) (*pub.Pub, error) {
-	for i := range parsingAttempts {
+	attempts := parsingAttempts
+	if len(places) <= parsingAttempts {
+		attempts = len(places)
+	}
+
+	for i := range attempts {
+
 		randomPlaceId := randomPlace(places)
 		randPub, err := g.processRandomPlace(places[randomPlaceId])
 		if err == nil {
