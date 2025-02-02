@@ -1,15 +1,16 @@
 package pub
 
 import (
-	osm2 "github.com/jamieyoung5/pooblet/pkg/osm"
+	"errors"
+	"github.com/jamieyoung5/pooblet/pkg/osm"
 )
 
 type Pub struct {
 	Tags         []Tag
 	Longitude    float64
 	Latitude     float64
-	Address      *osm2.Address
-	Name         osm2.Names
+	Address      *osm.Address
+	Name         osm.Names
 	OpeningTimes []OpeningHour
 }
 
@@ -43,18 +44,22 @@ func Merge(subject *Pub, merging Pub) {
 	}
 }
 
-func OsmElementToPub(element osm2.Element) (*Pub, error) {
+func OsmElementToPub(element osm.Element) (*Pub, error) {
 	names, err := element.FindNames()
 	if err != nil {
 		return nil, err
 	}
 
-	address, err := osm2.ReverseGeocode(element.Lat, element.Lon)
+	address, err := osm.ReverseGeocode(element.Lat, element.Lon)
 	if err != nil {
 		return nil, err
 	}
 
-	osm2.FilterTags(element.Tags)
+	if address == nil {
+		return nil, errors.New("reverse geocode failed")
+	}
+
+	osm.FilterTags(element.Tags)
 
 	return &Pub{
 		Tags:      convertOsmTags(element.Tags),

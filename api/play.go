@@ -13,6 +13,14 @@ import (
 	"strconv"
 )
 
+// response codes
+const (
+	ErrGeneralRouletteError = "1"
+	ErrNoPubsFound          = "2"
+	ErrServerError          = "3"
+	ErrInvalidInput         = "4"
+)
+
 var (
 	allowedOrigins = map[string]bool{
 		"https://www.pubroulette-web.vercel.app": true,
@@ -45,7 +53,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	lat, lon, rad, err := parseQueryParams(r)
 	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err.Error())
+		errorResponse(w, http.StatusBadRequest, ErrInvalidInput, err.Error())
 		return
 	}
 
@@ -71,14 +79,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	pub, err := game.Play(latitude, longitude, radius)
 	if err != nil {
 		logger.Error("Failed to play roulette", zap.Error(err))
-		errorResponse(w, http.StatusInternalServerError, "error occurred while playing roulette")
+		code := roulette.GetErrorCode(err)
+		errorResponse(w, http.StatusInternalServerError, strconv.Itoa(code), "")
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if err = json.NewEncoder(w).Encode(pub); err != nil {
 		logger.Error("Failed to encode response", zap.Error(err))
-		errorResponse(w, http.StatusInternalServerError, "Internal Server Error")
+		errorResponse(w, http.StatusInternalServerError, ErrServerError, "")
 	}
 }
 
@@ -103,9 +112,10 @@ func parseQueryParams(r *http.Request) (float64, float64, int, error) {
 	return lat, lon, radius, nil
 }
 
-func errorResponse(w http.ResponseWriter, status int, message string) {
+func errorResponse(w http.ResponseWriter, status int, code string, msg string) {
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": code, "message": msg})
 }
 
 func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
