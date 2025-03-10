@@ -32,5 +32,3 @@ features tagged '(Front-end)' are front-end only implementation
 - USE_GOOGLE_PLACES:
     0 = open street maps will only be used and the google places api will not be queried
     1 = google places will be used exclusively
-    2 = google places will be used exclusively but open street maps + other scrapers will be used as a backup
-    3 = google places will be used in conjunction with open street maps + other scrapers

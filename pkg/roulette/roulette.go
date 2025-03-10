@@ -138,7 +138,7 @@ func (g *Game) processRandomPlace(place osm.Element) (*pub.Pub, error) {
 		result, scrapingErr := scraper.Scrape(randPub.Name.Name)
 
 		if scrapingErr != nil {
-			g.logger.Error(
+			g.logger.Warn(
 				"Failed to scrape source for additional pub data",
 				zap.String("Pub name", randPub.Name.Name),
 				zap.String("Source", scraper.Source),

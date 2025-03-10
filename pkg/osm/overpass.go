@@ -15,17 +15,17 @@ var PubAmenities = []string{"pub", "bar"}
 
 const overpassInterpreter = "https://overpass-api.de/api/interpreter"
 
-type OverpassApi struct {
+type Client struct {
 	logger *zap.Logger
 }
 
-func NewOverpassApi(logger *zap.Logger) *OverpassApi {
-	return &OverpassApi{
+func NewOverpassClient(logger *zap.Logger) *Client {
+	return &Client{
 		logger: logger,
 	}
 }
 
-func (oa *OverpassApi) GetAmenitiesInRadius(lat, long, radius string, amenity string) (Places, error) {
+func (c *Client) GetAmenitiesInRadius(lat, long, radius string, amenity string) (Places, error) {
 	locationRadiusParameter := fmt.Sprintf("(around:%s,%s,%s);", radius, lat, long)
 	query := `[out:json];
     (
@@ -39,13 +39,13 @@ func (oa *OverpassApi) GetAmenitiesInRadius(lat, long, radius string, amenity st
 
 	response, err := executeQuery(query)
 	if err != nil {
-		oa.logger.Error("Failed to execute query to overpass api", zap.Error(err))
+		c.logger.Error("Failed to execute query to overpass api", zap.Error(err))
 		return nil, err
 	}
 
 	var parsedResponse *Response
 	if err = json.Unmarshal(response, &parsedResponse); err != nil {
-		oa.logger.Error("Failed to parse overpass api response", zap.Error(err))
+		c.logger.Error("Failed to parse overpass api response", zap.Error(err))
 		return nil, err
 	}
 
