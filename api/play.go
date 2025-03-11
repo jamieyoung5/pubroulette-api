@@ -3,14 +3,13 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jamieyoung5/pooblet/pkg/osm"
-	"github.com/jamieyoung5/pooblet/pkg/redis-client"
-	"github.com/jamieyoung5/pooblet/pkg/roulette"
-	"github.com/jamieyoung5/pooblet/pkg/whatpub"
-	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
+
+	"github.com/google/uuid"
+	"github.com/jamieyoung5/pubroulette-api/pkg/roulette"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 // response codes
@@ -38,7 +37,7 @@ func init() {
 		panic("Failed to initialise logger")
 	}
 
-	redisDb = redis_client.NewRedisDatabase()
+	logger = logger.With(zap.String("id", uuid.NewString()))
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -68,15 +67,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scrapers := []roulette.Scraper{
-		{Source: "whatpub.com", Scrape: whatpub.Scrape},
-	}
-
-	overpassApi := osm.NewOverpassApi(logger)
-
-	game := roulette.NewGame(logger, scrapers, overpassApi, redisDb)
-
-	pub, err := game.Play(latitude, longitude, radius)
+	pub, err := roulette.Play(latitude, longitude, radius, logger)
 	if err != nil {
 		logger.Error("Failed to play roulette", zap.Error(err))
 		code := roulette.GetErrorCode(err)

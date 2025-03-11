@@ -1,6 +1,6 @@
-module github.com/jamieyoung5/pooblet
+module github.com/jamieyoung5/pubroulette-api
 
-go 1.23
+go 1.23.7
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.1

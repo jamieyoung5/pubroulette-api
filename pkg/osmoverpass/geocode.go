@@ -1,5 +1,4 @@
-// Package
-package osm
+package osmoverpass
 
 import (
 	"encoding/json"
