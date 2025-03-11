@@ -1,5 +1,7 @@
 package googleplaces
 
+import "github.com/jamieyoung5/pubroulette-api/pkg/pub"
+
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
@@ -55,4 +57,24 @@ type PlacesAPIResponse struct {
 	HTMLAttributions []string `json:"html_attributions"`
 	Results          []Result `json:"results"`
 	Status           string   `json:"status"`
+}
+
+func (r *Result) toPub() *pub.Pub {
+
+	tags := []string{}
+	if r.Types != nil {
+		tags = r.Types
+	}
+
+	return &pub.Pub{
+		Name: pub.Names{
+			Name: r.Name,
+		},
+		Tags:         tags,
+		Longitude:    r.Geometry.Location.Lng,
+		Latitude:     r.Geometry.Location.Lat,
+		Address:      r.Vicinity,
+		Rating:       &r.Rating,
+		TotalRatings: &r.UserRatingsTotal,
+	}
 }

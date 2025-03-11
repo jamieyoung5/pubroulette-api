@@ -3,15 +3,22 @@ package googleplaces
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
+	"math/rand"
 	"net/http"
 	"os"
+
+	"github.com/jamieyoung5/pubroulette-api/pkg/pub"
+	"go.uber.org/zap"
 )
 
 const (
 	apiKeyEnvVar = "GOOGLE_API_KEY"
+	openNowOnly  = "OPENNOW_ONLY"
 
 	statusNoResults = "ZERO_RESULTS"
+
+	pubType    = "bar"
+	pubKeyword = "pub"
 )
 
 var (
@@ -19,8 +26,9 @@ var (
 )
 
 type Client struct {
-	logger *zap.Logger
-	apiKey string
+	logger   *zap.Logger
+	apiKey   string
+	openOnly string
 }
 
 func NewClient(logger *zap.Logger) *Client {
@@ -30,21 +38,59 @@ func NewClient(logger *zap.Logger) *Client {
 		panic("no google places api key set")
 	}
 
-	return &Client{logger: logger, apiKey: apiKey}
-}
-
-func (c *Client) GetAllAvailablePubs(location string, radius string) (*PlacesAPIResponse, error) {
-	googlePlacesApiKey := os.Getenv(apiKeyEnvVar)
-	if googlePlacesApiKey == "" {
-		fmt.Println("api key not found")
+	openOnly := ""
+	openOnlyEnv := os.Getenv(openNowOnly)
+	if openOnlyEnv == "yes" {
+		openOnly = "&opennow=true"
 	}
 
-	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%s&radius=%s&type=%s&key=%s&keyword=%s&opennow=true",
+	return &Client{
+		logger:   logger,
+		apiKey:   apiKey,
+		openOnly: openOnly,
+	}
+}
+
+// TODO: is this really the best approach in terms of extensibility when dealing with multiple data sources?
+
+// GetRandomPub gets on single pub at random from the google places api
+func (c *Client) GetRandomPub(lat, lon, radius string) (*pub.Pub, error) {
+	location := formatLocation(lat, lon)
+	places, err := c.getAllAvailablePlacesInRadius(location, radius, pubType, pubKeyword)
+	if err != nil {
+		return nil, err
+	}
+
+	randomIndex := rand.Intn(len(places))
+
+	return places[randomIndex].toPub(), nil
+}
+
+// GetAllAvailablePubs gets all pubs available from google places api
+func (c *Client) GetAllAvailablePubs(lat, lon, radius string) ([]*pub.Pub, error) {
+	location := formatLocation(lat, lon)
+	places, err := c.getAllAvailablePlacesInRadius(location, radius, pubType, pubKeyword)
+	if err != nil {
+		return nil, err
+	}
+
+	pubs := make([]*pub.Pub, len(places))
+	for i, place := range places {
+		pubs[i] = place.toPub()
+	}
+
+	return pubs, nil
+}
+
+func (c *Client) getAllAvailablePlacesInRadius(location, radius, placeType, placeKeyword string) ([]Result, error) {
+
+	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%s&radius=%s&type=%s&key=%s&keyword=%s",
 		location,
 		radius,
-		placeTypes[0],
-		googlePlacesApiKey,
-		placeTypes[1])
+		placeType,
+		c.apiKey,
+		placeKeyword,
+	) + c.openOnly
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -60,6 +106,10 @@ func (c *Client) GetAllAvailablePubs(location string, radius string) (*PlacesAPI
 		return nil, err
 	}
 
-	return &placesAPIResponse, nil
+	return placesAPIResponse.Results, nil
 
+}
+
+func formatLocation(lat, lon string) string {
+	return lat + "%2C" + lon
 }

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/jamieyoung5/pooblet/api"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
+	"github.com/jamieyoung5/pubroulette-api/api"
 )
 
 func main() {

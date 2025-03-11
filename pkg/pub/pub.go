@@ -1,28 +1,19 @@
 package pub
 
-import (
-	"github.com/jamieyoung5/pooblet/pkg/osm"
-)
-
 type Pub struct {
-	Tags         []Tag
+	Tags         []string
 	Longitude    float64
 	Latitude     float64
-	Address      *osm.Address
-	Name         osm.Names
-	OpeningTimes []OpeningHour
+	Address      string
+	Name         Names
+	Rating       *float64
+	TotalRatings *int
 }
 
-type Tag struct {
-	Name        string
-	Description string
-}
-
-type OpeningHour struct {
-	Day     string
-	Open24  string
-	Close24 string
-	Closed  bool
+type Names struct {
+	AltName string
+	Name    string
+	OldName string
 }
 
 const (
@@ -32,10 +23,6 @@ const (
 func Merge(subject *Pub, merging Pub) {
 	if merging.Tags != nil {
 		subject.Tags = merging.Tags
-	}
-
-	if merging.OpeningTimes != nil {
-		subject.OpeningTimes = merging.OpeningTimes
 	}
 
 	if merging.Name.OldName != "" {

@@ -1,19 +1,21 @@
-// Interacts with the overpass API
-
-package osm
+package osmoverpass
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
+	"math/rand"
 	"net/http"
+
+	"github.com/jamieyoung5/pubroulette-api/pkg/pub"
+	"go.uber.org/zap"
 )
 
-var PubAmenities = []string{"pub", "bar"}
-
-const overpassInterpreter = "https://overpass-api.de/api/interpreter"
+const (
+	overpassInterpreter = "https://overpass-api.de/api/interpreter"
+	pubAmenity          = "pub"
+)
 
 type Client struct {
 	logger *zap.Logger
@@ -25,7 +27,37 @@ func NewOverpassClient(logger *zap.Logger) *Client {
 	}
 }
 
-func (c *Client) GetAmenitiesInRadius(lat, long, radius string, amenity string) (Places, error) {
+func (c *Client) GetRandomPub(lat, lon, radius string) (*pub.Pub, error) {
+	amenities, err := c.getAmenitiesInRadius(lat, lon, radius, pubAmenity)
+	if err != nil {
+		return nil, err
+	}
+
+	randomIndex := rand.Intn(len(amenities))
+
+	return amenities[randomIndex].toPub()
+}
+
+func (c *Client) GetAllAvailablePubs(lat, lon, radius string) ([]*pub.Pub, error) {
+	places, err := c.getAmenitiesInRadius(lat, lon, radius, pubAmenity)
+	if err != nil {
+		return nil, err
+	}
+
+	pubs := make([]*pub.Pub, len(places))
+	for i, place := range places {
+		parsedPub, parsingErr := place.toPub()
+		if parsingErr != nil {
+			continue
+		}
+
+		pubs[i] = parsedPub
+	}
+
+	return pubs, nil
+}
+
+func (c *Client) getAmenitiesInRadius(lat, long, radius string, amenity string) ([]Element, error) {
 	locationRadiusParameter := fmt.Sprintf("(around:%s,%s,%s);", radius, lat, long)
 	query := `[out:json];
     (
@@ -49,7 +81,7 @@ func (c *Client) GetAmenitiesInRadius(lat, long, radius string, amenity string) 
 		return nil, err
 	}
 
-	return mapPlaces(parsedResponse)
+	return parsedResponse.Elements, nil
 }
 
 func executeQuery(query string) (response []byte, err error) {
@@ -65,13 +97,4 @@ func executeQuery(query string) (response []byte, err error) {
 	}
 
 	return body, nil
-}
-
-func mapPlaces(response *Response) (Places, error) {
-	places := make(Places)
-	for _, element := range response.Elements {
-		places[element.ID] = element
-	}
-
-	return places, nil
 }
