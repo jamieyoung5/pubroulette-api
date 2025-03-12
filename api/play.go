@@ -25,6 +25,7 @@ var (
 		"https://www.pubroulette-web.vercel.app": true,
 		"https://www.pubroulette.com":            true,
 		"https://www.pubroulette.xyz":            true,
+		"http://localhost:8080":                  true,
 	}
 	logger  *zap.Logger
 	redisDb *redis.Client
@@ -43,7 +44,7 @@ func init() {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		setCORSHeaders(w, r)
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
@@ -113,5 +114,8 @@ func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	if allowedOrigins[origin] {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true") // If using cookies/auth
 	}
 }
