@@ -84,13 +84,13 @@ func (c *Client) GetAllAvailablePubs(lat, lon, radius string) ([]*pub.Pub, error
 
 func (c *Client) getAllAvailablePlacesInRadius(location, radius, placeType, placeKeyword string) ([]Result, error) {
 
-	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%s&radius=%s&type=%s&key=%s&keyword=%s",
+	urlNoKey := fmt.Sprintf("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=%s&radius=%s&type=%s&keyword=%s",
 		location,
 		radius,
 		placeType,
-		c.apiKey,
 		placeKeyword,
 	) + c.openOnly
+	url := urlNoKey + fmt.Sprintf("&key=%s", c.apiKey)
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -98,6 +98,12 @@ func (c *Client) getAllAvailablePlacesInRadius(location, radius, placeType, plac
 		return nil, err
 	}
 	defer response.Body.Close()
+
+	c.logger.Info(
+		"sent request to places api",
+		zap.String("url (without key)", urlNoKey),
+		zap.String("status", response.Status),
+	)
 
 	var placesAPIResponse PlacesAPIResponse
 	err = json.NewDecoder(response.Body).Decode(&placesAPIResponse)

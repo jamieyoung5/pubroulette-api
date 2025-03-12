@@ -16,10 +16,6 @@ type Names struct {
 	OldName string
 }
 
-const (
-	usePlacesEnvVar = "USE_GOOGLE_PLACES"
-)
-
 func Merge(subject *Pub, merging Pub) {
 	if merging.Tags != nil {
 		subject.Tags = merging.Tags
