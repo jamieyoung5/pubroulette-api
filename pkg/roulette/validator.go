@@ -6,7 +6,10 @@ import (
 	"strconv"
 )
 
-const maxRadius = 2000 // in meters
+const (
+	maxRadius = 2000 // in meters
+	maxLength = 5    // max pub crawl length
+)
 
 func ValidateLocation(long float64, lat float64) (latitude, longitude string, err error) {
 	if long < -180 || long > 180 {
@@ -27,4 +30,11 @@ func ValidateRadius(radius int) (string, error) {
 		return "", errors.New("invalid radius")
 	}
 	return fmt.Sprintf("%d", radius), nil
+}
+
+func ValidateLength(length int) (int, error) {
+	if length < 1 || length > maxLength {
+		return -1, errors.New("invalid length")
+	}
+	return length, nil
 }

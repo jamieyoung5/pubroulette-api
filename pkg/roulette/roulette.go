@@ -4,8 +4,10 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/jamieyoung5/go-strc-yourself/pkg/sliceutil"
 	"github.com/jamieyoung5/pubroulette-api/pkg/googleplaces"
 	"github.com/jamieyoung5/pubroulette-api/pkg/osmoverpass"
+	"github.com/jamieyoung5/pubroulette-api/pkg/osrm"
 	"github.com/jamieyoung5/pubroulette-api/pkg/pub"
 	"go.uber.org/zap"
 )
@@ -15,7 +17,7 @@ type pubFinder interface {
 	GetAllAvailablePubs(lat, lon, radius string) ([]*pub.Pub, error)
 }
 
-func Play(lat, lon string, radius string, logger *zap.Logger) (*pub.Pub, error) {
+func Play(lat, lon, radius string, logger *zap.Logger) (*pub.Pub, error) {
 
 	finder := getFinder(logger)
 
@@ -45,6 +47,42 @@ func Play(lat, lon string, radius string, logger *zap.Logger) (*pub.Pub, error) 
 	)
 
 	return pub, nil
+}
+
+func Crawl(lat, lon, radius string, maxLength int, logger *zap.Logger) ([]*pub.Pub, error) {
+	finder := getFinder(logger)
+
+	logger.Info(
+		"Starting new crawl",
+		zap.String("latitude", lat),
+		zap.String("longitude", lon),
+		zap.String("radius", radius),
+		zap.Int("max length", maxLength),
+		zap.String("finder", reflect.TypeOf(finder).String()),
+	)
+
+	pubs, err := finder.GetAllAvailablePubs(lat, lon, radius)
+	if err != nil {
+		logger.Error(
+			"Error occurred while trying to find pubs",
+			zap.Error(err),
+		)
+
+		return nil, err
+	}
+
+	for i := range pubs {
+		pubs[i].Tags = filterTags(pubs[i].Tags)
+	}
+
+	crawlSize := maxLength
+	if maxLength > len(pubs) {
+		crawlSize = len(pubs)
+	}
+
+	subset := sliceutil.RandomSubset(pubs, crawlSize)
+
+	return osrm.GetOptimizedOrder(subset)
 }
 
 func getFinder(logger *zap.Logger) pubFinder {

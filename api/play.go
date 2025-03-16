@@ -2,13 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/jamieyoung5/pubroulette-api/pkg/roulette"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -20,16 +18,7 @@ const (
 	ErrInvalidInput         = "4"
 )
 
-var (
-	allowedOrigins = map[string]bool{
-		"https://www.pubroulette-web.vercel.app": true,
-		"https://www.pubroulette.com":            true,
-		"https://www.pubroulette.xyz":            true,
-		"http://localhost:8080":                  true,
-	}
-	logger  *zap.Logger
-	redisDb *redis.Client
-)
+var logger *zap.Logger
 
 func init() {
 	var err error
@@ -41,7 +30,7 @@ func init() {
 	logger = logger.With(zap.String("id", uuid.NewString()))
 }
 
-func Handler(w http.ResponseWriter, r *http.Request) {
+func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		setCORSHeaders(w, r)
 		w.WriteHeader(http.StatusNoContent)
@@ -51,7 +40,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
 	w.Header().Set("Content-Type", "application/json")
 
-	lat, lon, rad, err := parseQueryParams(r)
+	lat, lon, rad, err := parsePlayQueryParams(r)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, ErrInvalidInput, err.Error())
 		return
@@ -83,22 +72,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseQueryParams(r *http.Request) (float64, float64, int, error) {
+func parsePlayQueryParams(r *http.Request) (float64, float64, int, error) {
 	query := r.URL.Query()
 
 	lat, err := strconv.ParseFloat(query.Get("lat"), 64)
 	if err != nil {
-		return 0, 0, 0, errors.New("invalid latitude")
+		return 0, 0, 0, err
 	}
 
 	lon, err := strconv.ParseFloat(query.Get("lon"), 64)
 	if err != nil {
-		return 0, 0, 0, errors.New("invalid longitude")
+		return 0, 0, 0, err
 	}
 
 	radius, err := strconv.Atoi(query.Get("radius"))
 	if err != nil {
-		return 0, 0, 0, errors.New("invalid radius")
+		return 0, 0, 0, err
 	}
 
 	return lat, lon, radius, nil

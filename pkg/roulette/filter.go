@@ -5,16 +5,16 @@ import (
 )
 
 var whitelist = map[string][]string{
-	"Vegetarian Options":           []string{"diet:vegetarian"},
-	"Vegan Options":                []string{"diet:vegan"},
-	"Wheelchair Accessible":        []string{"wheelchair"},
-	"Outdoor Seating":              []string{"outdoor_seating"},
-	"Food":                         []string{"food"},
-	"Wheelchair Accessible Toilet": []string{"toilets:wheelchair"},
-	"Real Ale":                     []string{"real ale"},
-	"Brewery":                      []string{"brewery"},
-	"Micro Brewery":                []string{"microbrewery"},
-	"LGBTQ+":                       []string{"lgbtq"},
+	"Vegetarian Options":           {"diet:vegetarian"},
+	"Vegan Options":                {"diet:vegan"},
+	"Wheelchair Accessible":        {"wheelchair"},
+	"Outdoor Seating":              {"outdoor_seating"},
+	"Food":                         {"food", "restaurant", "cafe"},
+	"Wheelchair Accessible Toilet": {"toilets:wheelchair"},
+	"Real Ale":                     {"real ale"},
+	"Brewery":                      {"brewery"},
+	"Micro Brewery":                {"microbrewery"},
+	"LGBTQ+":                       {"lgbtq"},
 }
 
 func filterTags(tags []string) []string {
