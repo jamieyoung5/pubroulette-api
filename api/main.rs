@@ -3,7 +3,6 @@ use axum::{
     routing::get,
     Router,
 };
-use std::net::SocketAddr;
 use reqwest::header::ACCEPT;
 use reqwest::Method;
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -14,6 +13,7 @@ use tower::ServiceBuilder;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::GovernorLayer;
 use std::sync::Arc;
+use vercel_runtime::{run, Error};
 
 mod osm;
 mod roulette;
@@ -35,7 +35,7 @@ struct AppState {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     let cfg = bootstrap();
 
     let origins = match cfg.allow_origins.as_str() {
@@ -85,10 +85,8 @@ async fn main() {
                 .layer(GovernorLayer::new(governor_config))
         );
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], cfg.port.parse().unwrap()));
-
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    run(app).await?;
+    Ok(())
 }
 
 fn bootstrap() -> ApiConfig {
