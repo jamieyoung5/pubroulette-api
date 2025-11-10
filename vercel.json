@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "pubroulette-api/Cargo.toml",
+      "src": "Cargo.toml",
       "use": "@vercel/rust"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "pubroulette-api/Cargo.toml"
+      "dest": "Cargo.toml"
     }
   ]
 }
