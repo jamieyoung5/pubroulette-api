@@ -6,17 +6,14 @@ use axum::{
 use std::net::SocketAddr;
 use reqwest::header::ACCEPT;
 use reqwest::Method;
-// use serde::Deserialize; // Unused import
-use tower_http::cors::{AllowOrigin, /* Any, */ CorsLayer}; // 'Any' is unused
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use crate::roulette::{find_random_crawl, find_random_pub};
 use http::HeaderValue;
 
 use tower::ServiceBuilder;
 use tower_governor::governor::GovernorConfigBuilder;
-use tower_governor::GovernorLayer; // Quota import removed
-// use std::time::Duration; // No longer needed
-// use std::num::NonZeroU32; // No longer needed
-use std::sync::Arc; // Import Arc
+use tower_governor::GovernorLayer;
+use std::sync::Arc;
 
 mod osm;
 mod roulette;
