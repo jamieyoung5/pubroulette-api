@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Element {
     pub elem_type: String,
     pub id: i64,
@@ -10,13 +10,13 @@ pub struct Element {
     pub tags: HashMap<String, String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Location {
     pub latitude: f64,
     pub longitude: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Names {
     pub name: String,
     pub alt_name: Option<String>,
@@ -166,7 +166,104 @@ fn is_within_cone(bearing: f64, target_bearing: f64, cone_width: f64) -> bool {
     let target = (target_bearing + 360.0) % 360.0;
     let bearing = (bearing + 360.0) % 360.0;
 
-    let diff = (bearing - target + 180.0) % 360.0 - 180.0;
+    let mut diff = (bearing - target).rem_euclid(360.0);
+    if diff > 180.0 {
+        diff -= 360.0;
+    }
 
     diff.abs() <= half_width
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_bearing() {
+        let precision = 1e-3;
+
+        let bearing_north = calculate_bearing(0.0, 0.0, 1.0, 0.0);
+        assert!((bearing_north - 0.0).abs() < precision);
+
+        let bearing_east = calculate_bearing(0.0, 0.0, 0.0, 1.0);
+        assert!((bearing_east - 90.0).abs() < precision);
+
+        let bearing_south = calculate_bearing(0.0, 0.0, -1.0, 0.0);
+        assert!((bearing_south - 180.0).abs() < precision);
+
+        let bearing_west = calculate_bearing(0.0, 0.0, 0.0, -1.0);
+        assert!((bearing_west - 270.0).abs() < precision);
+
+        let bearing_ne = calculate_bearing(51.5, -0.1, 52.5, 0.9);
+        assert!((bearing_ne - 31.226).abs() < precision);
+    }
+
+    #[test]
+    fn test_is_within_cone() {
+        let cone_width = 70.0;
+
+        let target_90 = 90.0;
+        assert!(is_within_cone(90.0, target_90, cone_width));
+        assert!(is_within_cone(55.0, target_90, cone_width));
+        assert!(is_within_cone(125.0, target_90, cone_width));
+        assert!(!is_within_cone(54.9, target_90, cone_width));
+        assert!(!is_within_cone(125.1, target_90, cone_width));
+
+        let target_0 = 0.0;
+        assert!(is_within_cone(0.0, target_0, cone_width));
+        assert!(is_within_cone(360.0, target_0, cone_width));
+        assert!(is_within_cone(35.0, target_0, cone_width));
+        assert!(is_within_cone(325.0, target_0, cone_width));
+        assert!(is_within_cone(325.0, 360.0, cone_width));
+        assert!(!is_within_cone(35.1, target_0, cone_width));
+        assert!(!is_within_cone(324.9, target_0, cone_width));
+
+        let target_350 = 350.0;
+
+        assert!(is_within_cone(340.0, target_350, cone_width));
+        assert!(is_within_cone(10.0, target_350, cone_width));
+        assert!(is_within_cone(25.0, target_350, cone_width));
+        assert!(is_within_cone(315.0, target_350, cone_width));
+        assert!(!is_within_cone(25.1, target_350, cone_width));
+        assert!(!is_within_cone(314.9, target_350, cone_width));
+    }
+
+    fn create_mock_element(id: i64, lat: f64, lon: f64) -> Element {
+        Element {
+            elem_type: "node".to_string(),
+            id,
+            location: Location { latitude: lat, longitude: lon },
+            names: Names {
+                name: "Test Pub".to_string(),
+                alt_name: None,
+                old_name: None,
+            },
+            tags: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn test_filter_by_bearing() {
+        let start_lat = 0.0;
+        let start_lon = 0.0;
+
+        let el_north = create_mock_element(1, 1.0, 0.0);
+        let el_east = create_mock_element(2, 0.0, 1.0);
+        let el_south = create_mock_element(3, -1.0, 0.0);
+        let el_west = create_mock_element(4, 0.0, -1.0);
+
+        let elements = vec![el_north, el_east, el_south, el_west];
+
+        let filtered_north = filter_by_bearing(elements.clone(), start_lat, start_lon, 0.0);
+        assert_eq!(filtered_north.len(), 1);
+        assert_eq!(filtered_north[0].id, 1);
+
+        let filtered_east = filter_by_bearing(elements.clone(), start_lat, start_lon, 90.0);
+        assert_eq!(filtered_east.len(), 1);
+        assert_eq!(filtered_east[0].id, 2);
+
+        let filtered_ne = filter_by_bearing(elements.clone(), start_lat, start_lon, 45.0);
+
+        assert_eq!(filtered_ne.len(), 0);
+    }
 }

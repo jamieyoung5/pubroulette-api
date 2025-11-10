@@ -6,14 +6,17 @@ use axum::{
 use std::net::SocketAddr;
 use reqwest::header::ACCEPT;
 use reqwest::Method;
-use serde::Deserialize;
-use tower_http::cors::{AllowOrigin, Any, CorsLayer};
+// use serde::Deserialize; // Unused import
+use tower_http::cors::{AllowOrigin, /* Any, */ CorsLayer}; // 'Any' is unused
 use crate::roulette::{find_random_crawl, find_random_pub};
 use http::HeaderValue;
 
 use tower::ServiceBuilder;
 use tower_governor::governor::GovernorConfigBuilder;
-use tower_governor::GovernorLayer;
+use tower_governor::GovernorLayer; // Quota import removed
+// use std::time::Duration; // No longer needed
+// use std::num::NonZeroU32; // No longer needed
+use std::sync::Arc; // Import Arc
 
 mod osm;
 mod roulette;
@@ -61,18 +64,18 @@ async fn main() {
         .allow_methods(Method::GET)
         .allow_headers([ACCEPT]);
 
+    let governor_config = Arc::new(
+                                    GovernorConfigBuilder::default()
+                                        .per_second(2)
+                                        .burst_size(5)
+                                        .finish()
+                                        .unwrap(),
+    );
+
     let app_state = AppState {
         http_client: reqwest::Client::new(),
         osm_host: cfg.osm_host,
     };
-
-    let governor_config = Box::new(
-        GovernorConfigBuilder::default().per_second(120)
-            .per_minute(30)
-            .burst_size(5)
-            .finish()
-            .expect("Failed to build governor config"),
-    );
 
     let app = Router::new()
         .route("/pub", get(find_random_pub))
@@ -82,9 +85,7 @@ async fn main() {
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
-                .layer(GovernorLayer {
-                    config: Box::leak(governor_config),
-                })
+                .layer(GovernorLayer::new(governor_config))
         );
 
     let addr = SocketAddr::from(([0, 0, 0, 0], cfg.port.parse().unwrap()));
