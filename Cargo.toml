@@ -3,6 +3,17 @@ name = "pubroulette-api"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "play"
+path = "api/play.rs"
+
+[[bin]]
+name = "crawl"
+path = "api/crawl.rs"
+
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 axum = "0.8.6"
 tokio = { version = "1", features = ["full"] }
@@ -18,3 +29,4 @@ http = "1.3.1"
 tower = "0.4"
 tower_governor = { version = "0.8" }
 vercel_runtime = "1.1.6"
+serde_urlencoded = "0.7.1"

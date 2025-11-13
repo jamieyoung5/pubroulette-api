@@ -24,6 +24,7 @@ pub struct Names {
 }
 
 const OVERPASS_INTERPRETER: &str = "https://overpass-api.de/api/interpreter";
+const PUB_AMENITY: &str = "pub";
 
 pub async fn get_elements_in_radius(
     latitude: f64,
